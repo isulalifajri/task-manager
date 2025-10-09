@@ -24,20 +24,26 @@ Buat file dengan nama 'main.go' dg isi code seperti ini:
 package main
 
 import (
-    "fmt"
-    "log"
-    "net/http"
-    "task-manager/handlers"
+	"fmt"
+	"log"
+	"net/http"
+	"task-manager/handlers"
+	"task-manager/middlewares"
 )
 
 func main() {
-    http.HandleFunc("/", handlers.HomeHandler)
-    http.HandleFunc("/tasks", handlers.TaskHandler)
+	mux := http.NewServeMux()
 
-    fmt.Println("Server berjalan di http://localhost:1001")
-    log.Fatal(http.ListenAndServe(":1001", nil))
+	// route
+	mux.HandleFunc("/", handlers.HomeHandler)
+	mux.HandleFunc("/tasks", handlers.TaskHandler)
+
+	// pasang middleware (urutan penting)
+	handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(mux))
+
+	fmt.Println("Server berjalan di http://localhost:1001 🚀")
+	log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
 }
-
 
 ```
 
@@ -205,6 +211,46 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Metode tidak didukung", http.StatusMethodNotAllowed)
 	}
+}
+
+```
+
+membuat file `middlewars.go` di folder middlewars dg isi file seperti ini:
+
+```
+package middlewares
+
+import (
+	"log"
+	"net/http"
+	"time"
+)
+
+// LoggingMiddleware mencatat setiap request yang masuk
+func LoggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		log.Printf("[%s] %s %s", r.Method, r.RequestURI, r.RemoteAddr)
+		next.ServeHTTP(w, r)
+		log.Printf("Selesai dalam %v", time.Since(start))
+	})
+}
+
+// CORSMiddleware mengizinkan akses dari frontend React.js
+func CORSMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*") // bisa diganti domain React
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// untuk preflight (OPTIONS)
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 ```
