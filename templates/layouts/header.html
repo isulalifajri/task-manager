@@ -1,9 +1,22 @@
 {{define "layouts/header.html"}}
-<header class="bg-white shadow px-6 py-4 flex justify-between items-center">
-  <h1 class="text-lg font-semibold text-gray-700">Task Manager</h1>
-  <div class="flex items-center space-x-3">
-    <span class="text-gray-500 text-sm">John Doe</span>
-    <img src="https://i.pravatar.cc/40" class="w-8 h-8 rounded-full" alt="user">
+<header x-data="{ open: false }" class="bg-white shadow-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+  <div class="flex items-center gap-4">
+    <!-- Tombol toggle sidebar -->
+    <button 
+      @click="$dispatch('toggle-sidebar')" 
+      class="text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg focus:outline-none transition"
+    >
+      <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <!-- Logo -->
+    <h1 class="font-bold text-lg text-gray-700">Task Manager</h1>
+  </div>
+
+  <!-- Profil -->
+  <div class="flex items-center gap-3">
+    <span class="text-gray-600 font-medium hidden sm:inline">John Doe</span>
+    <img src="https://i.pravatar.cc/40" class="w-9 h-9 rounded-full border border-gray-300" alt="User">
   </div>
 </header>
 {{end}}

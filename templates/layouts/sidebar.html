@@ -1,10 +1,59 @@
 {{define "layouts/sidebar.html"}}
-<aside class="w-64 bg-indigo-200 text-white min-h-screen p-6 space-y-4">
-  <h2 class="text-xl font-semibold mb-6">Dashboard</h2>
-  <nav class="space-y-3">
-    <a href="/dashboard" class="block py-2 px-4 rounded hover:bg-indigo-700">🏠 Dashboard</a>
-    <a href="/tasks/html" class="block py-2 px-4 rounded hover:bg-indigo-700">📋 Tasks</a>
-    <a href="#" class="block py-2 px-4 rounded hover:bg-indigo-700">📊 Reports</a>
+<aside 
+  x-data="{ open: window.innerWidth >= 768 }"
+  @toggle-sidebar.window="open = !open"
+  @resize.window="if (window.innerWidth >= 768) open = true; else open = false"
+>
+  <!-- Overlay (muncul hanya di mobile) -->
+  <div 
+    x-show="open && window.innerWidth < 768"
+    @click="open = false"
+    class="fixed inset-0 bg-black/40 z-40 transition-opacity md:hidden"
+  ></div>
+
+  <!-- Sidebar utama -->
+  <nav 
+    class="fixed md:static top-0 left-0 h-full w-64 bg-gradient-to-b from-indigo-500 to-purple-600 text-white p-6 space-y-4 z-50 transform transition-transform duration-300"
+    :class="open ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+  >
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-xl font-semibold">Menu</h2>
+      <!-- Tombol close (muncul di HP) -->
+      <button 
+        @click="open = false" 
+        class="md:hidden text-white text-2xl leading-none hover:text-gray-200"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <ul class="space-y-2">
+      <li>
+        <a href="/dashboard" class="block py-2 px-4 rounded-lg hover:bg-white/20 transition">
+          <i class="fas fa-home mr-2"></i> Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="/tasks/html" class="block py-2 px-4 rounded-lg hover:bg-white/20 transition">
+          <i class="fas fa-tasks mr-2"></i> Tasks
+        </a>
+      </li>
+      <li>
+        <a href="#" class="block py-2 px-4 rounded-lg hover:bg-white/20 transition">
+          <i class="fas fa-chart-bar mr-2"></i> Reports
+        </a>
+      </li>
+      <li>
+        <a href="#" class="block py-2 px-4 rounded-lg hover:bg-white/20 transition">
+          <i class="fas fa-cog mr-2"></i> Settings
+        </a>
+      </li>
+      <li>
+        <a href="#" class="block py-2 px-4 rounded-lg hover:bg-white/20 transition">
+          <i class="fas fa-sign-out-alt mr-2"></i> Logout
+        </a>
+      </li>
+    </ul>
   </nav>
 </aside>
 {{end}}
