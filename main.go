@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"task-manager/database"
 	"task-manager/handlers"
 	"task-manager/middlewares"
 )
 
 func main() {
+	// koneksi database
+	database.ConnectDatabase()
 	mux := http.NewServeMux()
 
 	// route

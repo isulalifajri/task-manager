@@ -261,3 +261,128 @@ Kemudian jalankan:
 go run main.go
 
 ```
+
+## Koneksikan dengan database PostgreSQL
+
+link download: `https://www.postgresql.org/download/`
+
+masuk ke postgreSQl lewat terminal dengan perintah ini:
+
+```
+psql -U postgres
+
+```
+
+lalu buat database baru:
+
+```
+CREATE DATABASE task_manager;
+\c task_manager;
+
+```
+
+kemudian buat tabel tasks:
+
+```
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+    status VARCHAR(20) DEFAULT 'ready',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+```
+
+### Tambah library PostgreSQL di Go
+
+kita menggunakan library pgx (modern & cepat):
+
+```
+go get github.com/jackc/pgx/v5
+
+```
+
+gambaran structur folder nya:
+
+```
+task-manager/
+│
+├─ database/
+│   └─ db.go
+├─ handlers/
+│   └─ task_handler.go
+├─ models/
+│   └─ models.go
+├─ middlewares/
+│   └─ middlewares.go
+└─ main.go
+
+```
+
+isi file `database/db.go`:
+
+```
+package database
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var DB *pgxpool.Pool
+
+// ConnectDatabase menghubungkan ke PostgreSQL
+func ConnectDatabase() {
+	dsn := "postgres://postgres:12345@localhost:5432/task_manager" // ganti password sesuai PostgreSQL kamu
+
+	var err error
+	DB, err = pgxpool.New(context.Background(), dsn)
+	if err != nil {
+		log.Fatalf("❌ Gagal koneksi ke database: %v", err)
+	}
+
+	err = DB.Ping(context.Background())
+	if err != nil {
+		log.Fatalf("Database tidak merespon: %v", err)
+	}
+
+	fmt.Println("Koneksi ke database berhasil!")
+}
+
+```
+
+# Update main.go
+
+```
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"task-manager/database"
+	"task-manager/handlers"
+	"task-manager/middlewares"
+)
+
+func main() {
+	// koneksi database
+	database.ConnectDatabase()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", handlers.HomeHandler)
+	mux.HandleFunc("/tasks", handlers.TaskHandler)
+
+	handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(mux))
+
+	fmt.Println("Server berjalan di http://localhost:1001")
+	log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
+}
+
+```
+
+kemudian jalankan lagi: `go run main.go`
