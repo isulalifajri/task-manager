@@ -21,6 +21,6 @@ func main() {
 	// pasang middleware (urutan penting)
 	handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(mux))
 
-	fmt.Println("Server berjalan di http://localhost:1001 🚀")
+	fmt.Println("Server berjalan di http://localhost:1001")
 	log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
 }

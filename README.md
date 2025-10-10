@@ -385,4 +385,6 @@ func main() {
 
 ```
 
+jalankan perintah ini: `go mod tidy`
+
 kemudian jalankan lagi: `go run main.go`
