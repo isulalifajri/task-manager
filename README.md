@@ -41,7 +41,7 @@ func main() {
 	// pasang middleware (urutan penting)
 	handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(mux))
 
-	fmt.Println("Server berjalan di http://localhost:1001 🚀")
+	fmt.Println("Server berjalan di http://localhost:1001")
 	log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
 }
 
@@ -74,7 +74,7 @@ var tasks = []models.Task{
 // HomeHandler — untuk halaman utama
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Selamat datang di Task Manager API 🎯"))
+	w.Write([]byte("Selamat datang di Task Manager API"))
 }
 
 // TaskHandler — endpoint /tasks
@@ -122,7 +122,7 @@ var tasks = []models.Task{
 // HomeHandler — untuk halaman utama
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Selamat datang di Task Manager API 🎯"))
+	w.Write([]byte("Selamat datang di Task Manager API"))
 }
 
 // TaskHandler — endpoint /tasks
@@ -296,7 +296,7 @@ CREATE TABLE tasks (
 
 ### Tambah library PostgreSQL di Go
 
-kita menggunakan library pgx (modern & cepat):
+kita menggunakan library pgx (modern & cepat): //jika ingin menggunakan migration lebih skip ini dan gunakan GORM
 
 ```
 go get github.com/jackc/pgx/v5
@@ -342,7 +342,7 @@ func ConnectDatabase() {
 	var err error
 	DB, err = pgxpool.New(context.Background(), dsn)
 	if err != nil {
-		log.Fatalf("❌ Gagal koneksi ke database: %v", err)
+		log.Fatalf("Gagal koneksi ke database: %v", err)
 	}
 
 	err = DB.Ping(context.Background())
@@ -388,3 +388,121 @@ func main() {
 jalankan perintah ini: `go mod tidy`
 
 kemudian jalankan lagi: `go run main.go`
+
+## Menggunkan GORM di project untuk migration tabels
+
+install GORM dan driver
+
+```
+go get gorm.io/gorm
+go get gorm.io/driver/postgres
+
+```
+
+isi file `database/db.go` jadi seperti ini:
+
+```
+package database
+
+import (
+	"fmt"
+	"log"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func ConnectDatabase() {
+	dsn := "host=localhost user=postgres password=postgres dbname=task_manager port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("Gagal koneksi ke database: %v", err)
+	}
+
+	DB = db
+	fmt.Println("Koneksi ke database berhasil (GORM)")
+}
+
+```
+
+buat file baru: `database/migrate.go` dan isi seperti ini:
+
+```
+package database
+
+import (
+	"fmt"
+	"task-manager/models"
+)
+
+func Migrate() {
+	err := DB.AutoMigrate(&models.User{}, &models.Task{})
+	if err != nil {
+		panic("Gagal migrasi database: " + err.Error())
+	}
+	fmt.Println("Migrasi database selesai (GORM)")
+}
+
+```
+
+update `models/models.go` seperti ini:
+
+```
+package models
+
+type User struct {
+	ID   uint   `gorm:"primaryKey"`
+	Name string `gorm:"type:varchar(100)"`
+	Role string `gorm:"type:varchar(50)"`
+}
+
+type Task struct {
+	ID          uint   `gorm:"primaryKey"`
+	Title       string `gorm:"type:varchar(100)"`
+	Description string
+	Status      string `gorm:"type:varchar(20)"`
+	AssignedTo  uint
+}
+
+```
+
+tambahkan pemanggilan database.Migrate() setelah ConnectDatabase()
+jadi file `main.go` kamu seperti ini:
+
+```
+package main
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"task-manager/database"
+	"task-manager/handlers"
+	"task-manager/middlewares"
+)
+
+func main() {
+	// koneksi database
+	database.ConnectDatabase()
+
+	// jalankan migrasi
+	database.Migrate()
+
+	mux := http.NewServeMux()
+
+	// route
+	mux.HandleFunc("/", handlers.HomeHandler)
+	mux.HandleFunc("/tasks", handlers.TaskHandler)
+
+	// pasang middleware (urutan penting)
+	handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(mux))
+
+	fmt.Println("Server berjalan di http://localhost:1001")
+	log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
+}
+
+```
+
+jalankan lagi aplikasi nya: `go run .`

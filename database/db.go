@@ -1,29 +1,22 @@
 package database
 
 import (
-	"context"
 	"fmt"
 	"log"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-var DB *pgxpool.Pool
+var DB *gorm.DB
 
-// ConnectDatabase menghubungkan ke PostgreSQL
 func ConnectDatabase() {
-	dsn := "postgres://postgres:postgres@localhost:5432/task_manager" // ganti password sesuai PostgreSQL kamu
-
-	var err error
-	DB, err = pgxpool.New(context.Background(), dsn)
+	dsn := "host=localhost user=postgres password=postgres dbname=task_manager port=5432 sslmode=disable"
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Gagal koneksi ke database: %v", err)
 	}
 
-	err = DB.Ping(context.Background())
-	if err != nil {
-		log.Fatalf("Database tidak merespon: %v", err)
-	}
-
-	fmt.Println("Koneksi ke database berhasil!")
+	DB = db
+	fmt.Println("Koneksi ke database berhasil (GORM)")
 }

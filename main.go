@@ -12,6 +12,10 @@ import (
 func main() {
 	// koneksi database
 	database.ConnectDatabase()
+
+	// jalankan migrasi
+	database.Migrate()
+
 	mux := http.NewServeMux()
 
 	// route

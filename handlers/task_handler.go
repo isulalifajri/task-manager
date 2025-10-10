@@ -23,7 +23,7 @@ var tasks = []models.Task{
 // HomeHandler — untuk halaman utama
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Selamat datang di Task Manager API 🎯"))
+	w.Write([]byte("Selamat datang di Task Manager API"))
 }
 
 // TaskHandler — endpoint /tasks
@@ -34,17 +34,16 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		idParam := r.URL.Query().Get("id")
 		if idParam == "" {
-			// tanpa parameter: tampilkan semua
 			json.NewEncoder(w).Encode(tasks)
 			return
 		}
 
-		// kalau ada parameter id
-		id, err := strconv.Atoi(idParam)
+		intID, err := strconv.Atoi(idParam)
 		if err != nil {
 			http.Error(w, "ID tidak valid", http.StatusBadRequest)
 			return
 		}
+		id := uint(intID)
 
 		for _, task := range tasks {
 			if task.ID == id {
@@ -61,7 +60,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newTask.ID = len(tasks) + 1
+		newTask.ID = uint(len(tasks) + 1)
 		tasks = append(tasks, newTask)
 
 		w.WriteHeader(http.StatusCreated)
@@ -69,11 +68,12 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	case "PUT":
 		idParam := r.URL.Query().Get("id")
-		id, err := strconv.Atoi(idParam)
+		intID, err := strconv.Atoi(idParam)
 		if err != nil {
 			http.Error(w, "ID tidak valid", http.StatusBadRequest)
 			return
 		}
+		id := uint(intID)
 
 		var updatedTask models.Task
 		if err := json.NewDecoder(r.Body).Decode(&updatedTask); err != nil {
@@ -93,11 +93,12 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	case "DELETE":
 		idParam := r.URL.Query().Get("id")
-		id, err := strconv.Atoi(idParam)
+		intID, err := strconv.Atoi(idParam)
 		if err != nil {
 			http.Error(w, "ID tidak valid", http.StatusBadRequest)
 			return
 		}
+		id := uint(intID)
 
 		for i, t := range tasks {
 			if t.ID == id {

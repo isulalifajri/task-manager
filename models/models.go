@@ -1,17 +1,15 @@
 package models
 
-// User merepresentasikan data pengguna sistem
 type User struct {
-	ID    int
-	Name  string
-	Role  string // contoh: "manager", "developer", "reviewer"
+	ID   uint   `gorm:"primaryKey"`
+	Name string `gorm:"type:varchar(100)"`
+	Role string `gorm:"type:varchar(50)"`
 }
 
-// Task merepresentasikan tugas di sistem
 type Task struct {
-	ID          int
-	Title       string
+	ID          uint   `gorm:"primaryKey"`
+	Title       string `gorm:"type:varchar(100)"`
 	Description string
-	Status      string // contoh: "ready", "on progress", "review", "done"
-	AssignedTo  int    // ID user yang ditugaskan
+	Status      string `gorm:"type:varchar(20)"`
+	AssignedTo  uint
 }
