@@ -2,19 +2,20 @@ package handlers
 
 import (
 	"encoding/json"
+	"html/template"
 	"net/http"
 	"strconv"
 	"task-manager/database"
 	"task-manager/models"
 )
 
-// HomeHandler — halaman utama
+// ==================== API JSON ====================
+
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.Write([]byte("Selamat datang di Task Manager API 🎯"))
 }
 
-// TaskHandler — endpoint CRUD task
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -61,7 +62,6 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// update field
 		task.Title = updatedTask.Title
 		task.Description = updatedTask.Description
 		task.Status = updatedTask.Status
@@ -95,4 +95,69 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Metode tidak didukung", http.StatusMethodNotAllowed)
 	}
+}
+
+// ==================== HTML UI ====================
+
+func TaskHTMLHandler(w http.ResponseWriter, r *http.Request) {
+	var tasks []models.Task
+	database.DB.Preload("AssignedUser").Preload("Creator").Find(&tasks)
+
+	tmpl := template.Must(template.ParseFiles("templates/layout/header.html", "templates/layout/footer.html", "templates/tasks.html"))
+	tmpl.ExecuteTemplate(w, "base", tasks)
+}
+
+func TaskFormHandler(w http.ResponseWriter, r *http.Request) {
+	tmpl := template.Must(template.ParseFiles("templates/layout/header.html", "templates/layout/footer.html", "templates/task_form.html"))
+	tmpl.ExecuteTemplate(w, "base", nil)
+}
+
+func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		return
+	}
+
+	title := r.FormValue("title")
+	description := r.FormValue("description")
+	status := r.FormValue("status")
+	assignedTo, _ := strconv.Atoi(r.FormValue("assigned_to"))
+	createdBy, _ := strconv.Atoi(r.FormValue("created_by"))
+
+	task := models.Task{
+		Title:       title,
+		Description: description,
+		Status:      status,
+		AssignedTo:  uint(assignedTo),
+		CreatedBy:   uint(createdBy),
+	}
+
+	if err := database.DB.Create(&task).Error; err != nil {
+		http.Error(w, "Gagal membuat task", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/tasks/html", http.StatusSeeOther)
+}
+
+// ✅ Handler tambahan: DELETE via tombol HTML
+func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.Error(w, "Metode tidak diizinkan", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := r.URL.Path[len("/tasks/delete/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID tidak valid", http.StatusBadRequest)
+		return
+	}
+
+	if err := database.DB.Delete(&models.Task{}, id).Error; err != nil {
+		http.Error(w, "Gagal menghapus task", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/tasks/html", http.StatusSeeOther)
 }
