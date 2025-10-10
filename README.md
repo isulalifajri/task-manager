@@ -296,7 +296,7 @@ CREATE TABLE tasks (
 
 ### Tambah library PostgreSQL di Go
 
-kita menggunakan library pgx (modern & cepat): //jika ingin menggunakan migration lebih skip ini dan gunakan GORM
+kita menggunakan library pgx (modern & cepat): //jika ingin menggunakan migration lebih baik skip ini dan gunakan GORM
 
 ```
 go get github.com/jackc/pgx/v5

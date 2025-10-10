@@ -6,9 +6,14 @@ import (
 )
 
 func Migrate() {
-	err := DB.AutoMigrate(&models.User{}, &models.Task{})
+	err := DB.AutoMigrate(
+		&models.Role{},
+		&models.User{},
+		&models.Task{},
+	)
 	if err != nil {
-		panic("Gagal migrasi database: " + err.Error())
+		fmt.Println("Gagal migrasi:", err)
+		return
 	}
-	fmt.Println("Migrasi database selesai (GORM)")
+	fmt.Println("Migrasi berhasil!")
 }

@@ -1,30 +1,32 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"task-manager/database"
-	"task-manager/handlers"
-	"task-manager/middlewares"
+    "fmt"
+    "log"
+    "net/http"
+    "task-manager/database"
+    "task-manager/handlers"
+    "task-manager/middlewares"
+
+    "github.com/gorilla/mux"
 )
 
 func main() {
-	// koneksi database
-	database.ConnectDatabase()
+    // koneksi database
+    database.ConnectDatabase()
+    database.Migrate()
+    database.Seed()
 
-	// jalankan migrasi
-	database.Migrate()
+    router := mux.NewRouter()
 
-	mux := http.NewServeMux()
+    // route
+    router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
+    router.HandleFunc("/tasks", handlers.TaskHandler).Methods("GET", "POST")
+    router.HandleFunc("/tasks/{id}", handlers.TaskHandler).Methods("PUT", "DELETE")
 
-	// route
-	mux.HandleFunc("/", handlers.HomeHandler)
-	mux.HandleFunc("/tasks", handlers.TaskHandler)
+    // pasang middleware
+    handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(router))
 
-	// pasang middleware (urutan penting)
-	handlerWithMiddleware := middlewares.LoggingMiddleware(middlewares.CORSMiddleware(mux))
-
-	fmt.Println("Server berjalan di http://localhost:1001")
-	log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
+    fmt.Println("Server berjalan di http://localhost:1001")
+    log.Fatal(http.ListenAndServe(":1001", handlerWithMiddleware))
 }
