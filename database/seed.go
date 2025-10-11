@@ -16,14 +16,7 @@ func Seed() {
 		{Name: "developer", Description: "Developer"},
 		{Name: "reviewer", Description: "Code Reviewer"},
 	}
-
-	for _, role := range roles {
-		var existing models.Role
-		if err := DB.Where("name = ?", role.Name).First(&existing).Error; err != nil {
-			DB.Create(&role)
-		}
-	}
-
+	DB.Create(&roles)
 	fmt.Println("Roles siap!")
 
 	// ===== Users =====
@@ -32,14 +25,7 @@ func Seed() {
 		{Name: "Dwi", Username: "dwi", Email: "dwi@example.com", Password: hashPassword("123456"), RoleID: 3},
 		{Name: "Raka", Username: "raka", Email: "raka@example.com", Password: hashPassword("123456"), RoleID: 4},
 	}
-
-	for _, user := range users {
-		var existing models.User
-		if err := DB.Where("email = ?", user.Email).First(&existing).Error; err != nil {
-			DB.Create(&user)
-		}
-	}
-
+	DB.Create(&users)
 	fmt.Println("Users siap!")
 
 	// ===== Tasks =====
@@ -48,8 +34,8 @@ func Seed() {
 			Title:       "Setup project",
 			Description: "Inisialisasi repo dan struktur folder",
 			Status:      "done",
-			AssignedTo:  2, // ID user
-			CreatedBy:   2, // ID user yang membuat task
+			AssignedTo:  2,
+			CreatedBy:   2,
 			TaskLink:    "https://example.com/task/1",
 		},
 		{
@@ -69,18 +55,10 @@ func Seed() {
 			TaskLink:    "https://example.com/task/3",
 		},
 	}
-
-	for _, task := range tasks {
-		var existing models.Task
-		if err := DB.Where("title = ?", task.Title).First(&existing).Error; err != nil {
-			DB.Create(&task)
-		}
-	}
-
+	DB.Create(&tasks)
 	fmt.Println("Tasks siap!")
 }
 
-// hashPassword bikin password terenkripsi
 func hashPassword(pw string) string {
 	hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
 	if err != nil {

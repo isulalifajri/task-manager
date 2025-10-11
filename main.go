@@ -14,21 +14,25 @@ import (
 func main() {
 	// === Setup Database ===
 	database.ConnectDatabase()
-	database.Migrate()
-	database.Seed()
+	database.Fresh()
 
 	// === Router utama ===
 	router := mux.NewRouter()
 
-	// === Route Dashboard HTML ===
-	router.HandleFunc("/dashboard", handlers.DashboardHandler).Methods("GET")
+	// === Simpan router ke package handlers ===
+	handlers.Router = router
+
+	// === Routes dengan nama ===
+	router.HandleFunc("/dashboard", handlers.DashboardHandler).
+		Name("dashboard").
+		Methods("GET")
 
 	// === Static files (CSS, JS, gambar, dll) ===
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
 	)
 
-	// === Pasang middleware ===
+	// === Middleware (logging + CORS) ===
 	handlerWithMiddleware := middlewares.LoggingMiddleware(
 		middlewares.CORSMiddleware(router),
 	)

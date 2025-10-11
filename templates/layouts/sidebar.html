@@ -36,23 +36,42 @@
     </div>
 
     <ul class="space-y-2 pb-6">
+      <!-- Dashboard -->
       <li>
-        <a href="/dashboard" class="flex items-center py-2 px-4 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+        <a href="{{.DashboardURL}}" 
+          class="flex items-center py-2 px-4 rounded-lg transition
+          {{if eq .CurrentPath "/dashboard"}}bg-indigo-500 text-white font-semibold
+          {{else}}text-gray-700 hover:bg-indigo-50 hover:text-indigo-600{{end}}">
           <i class="fas fa-home mr-3"></i> Dashboard
         </a>
       </li>
+
+      <!-- Tasks -->
       <li>
-        <a href="/tasks/html" class="flex items-center py-2 px-4 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+        <a href="/tasks/html"
+           class="flex items-center py-2 px-4 rounded-lg transition
+           {{if eq .CurrentPath "/tasks/html"}}bg-indigo-500 text-white font-semibold
+           {{else}}text-gray-700 hover:bg-indigo-50 hover:text-indigo-600{{end}}">
           <i class="fas fa-tasks mr-3"></i> Tasks
         </a>
       </li>
+
+      <!-- Reports -->
       <li>
-        <a href="#" class="flex items-center py-2 px-4 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+        <a href="/reports"
+           class="flex items-center py-2 px-4 rounded-lg transition
+           {{if eq .CurrentPath "/reports"}}bg-indigo-500 text-white font-semibold
+           {{else}}text-gray-700 hover:bg-indigo-50 hover:text-indigo-600{{end}}">
           <i class="fas fa-chart-bar mr-3"></i> Reports
         </a>
       </li>
+
+      <!-- Settings -->
       <li>
-        <a href="#" class="flex items-center py-2 px-4 rounded-lg text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition">
+        <a href="/settings"
+           class="flex items-center py-2 px-4 rounded-lg transition
+           {{if eq .CurrentPath "/settings"}}bg-indigo-500 text-white font-semibold
+           {{else}}text-gray-700 hover:bg-indigo-50 hover:text-indigo-600{{end}}">
           <i class="fas fa-cog mr-3"></i> Settings
         </a>
       </li>

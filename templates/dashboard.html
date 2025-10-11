@@ -37,15 +37,15 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-br from-indigo-500 to-purple-500 text-white rounded-2xl p-6 shadow-md">
           <h3 class="text-sm opacity-80 mb-1">Completed</h3>
-          <p class="text-4xl font-semibold">18</p>
+          <p class="text-4xl font-semibold">{{.Completed}}</p>
         </div>
         <div class="bg-gradient-to-br from-yellow-400 to-orange-500 text-white rounded-2xl p-6 shadow-md">
           <h3 class="text-sm opacity-80 mb-1">In Progress</h3>
-          <p class="text-4xl font-semibold">13</p>
+          <p class="text-4xl font-semibold">{{.InProgress}}</p>
         </div>
         <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
           <h3 class="text-sm text-gray-500 mb-1">Total Tasks</h3>
-          <p class="text-4xl font-semibold text-indigo-600">{{len .}}</p>
+          <p class="text-4xl font-semibold text-indigo-600">{{.TotalTasks}}</p>
         </div>
         <div class="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
           <h3 class="text-sm text-gray-500 mb-1">Team Members</h3>
@@ -58,7 +58,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-md">
           <h2 class="text-lg font-semibold mb-4 text-gray-700">Recent Tasks</h2>
           <div class="space-y-4">
-            {{range .}}
+            {{range .Tasks}}
             <div class="p-4 rounded-xl border border-gray-100 hover:shadow transition">
               <div class="flex justify-between items-center mb-2">
                 <h3 class="font-semibold text-gray-800">{{.Title}}</h3>
