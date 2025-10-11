@@ -1,10 +1,13 @@
 {{define "layouts/header.html"}}
-<header x-data="{ open: false }" class="bg-white shadow-md px-6 py-4 flex items-center justify-between sticky top-0 z-40">
+<header 
+  x-data="{ open: false }" 
+  class="mx-6 mt-4 mb-6 bg-white shadow-md rounded-3xl px-6 py-4 flex items-center justify-between sticky top-4 z-40"
+>
   <div class="flex items-center gap-4">
     <!-- Tombol toggle sidebar -->
     <button 
       @click="$dispatch('toggle-sidebar')" 
-      class="text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg focus:outline-none transition"
+      class="text-indigo-600 hover:bg-indigo-100 p-2 rounded-lg focus:outline-none transition md:hidden"
     >
       <i class="fas fa-bars text-xl"></i>
     </button>
@@ -16,7 +19,11 @@
   <!-- Profil -->
   <div class="flex items-center gap-3">
     <span class="text-gray-600 font-medium hidden sm:inline">John Doe</span>
-    <img src="https://i.pravatar.cc/40" class="w-9 h-9 rounded-full border border-gray-300" alt="User">
+    <img 
+      src="https://i.pravatar.cc/40" 
+      class="w-9 h-9 rounded-full border border-gray-300" 
+      alt="User"
+    >
   </div>
 </header>
 {{end}}
