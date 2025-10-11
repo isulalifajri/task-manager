@@ -1,5 +1,8 @@
 {{define "layouts/footer.html"}}
-<footer class="bg-white text-gray-500 text-sm text-center py-4 border-t mt-auto rounded-3xl">
-  &copy; 2025 Task Manager. All rights reserved.
+<footer class="bg-white text-gray-500 text-sm text-center py-4 border-t mt-auto rounded-t-3xl">
+  &copy; {{year}} Task Manager. All rights reserved.
+  <div> 
+    <span class="text-blue-400 text-xs ml-auto">Running on {{goversion}}</span>
+  </div>
 </footer>
 {{end}}

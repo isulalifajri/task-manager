@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"task-manager/database"
 	"task-manager/models"
+	"runtime"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -26,6 +28,10 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Ambil total user dari database
+	var totalUsers int64
+	database.DB.Model(&models.User{}).Count(&totalUsers)
+
 	// Ambil URL dari named route
 	var dashboardURL string
 	if route := Router.Get("dashboard"); route != nil {
@@ -39,11 +45,17 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 		"TotalTasks":    len(tasks),
 		"Completed":     completedCount,
 		"InProgress":    inProgressCount,
+		"TotalUsers":    totalUsers,
 		"CurrentPath":   r.URL.Path,
 		"DashboardURL":  dashboardURL,
 	}
 
-	tmpl := template.Must(template.ParseFiles(
+	tmpl := template.New("").Funcs(template.FuncMap{
+		"year":      func() int { return time.Now().Year() },
+		"goversion": func() string { return runtime.Version() },
+	})
+
+	tmpl = template.Must(tmpl.ParseFiles(
 		"templates/dashboard.html",
 		"templates/layouts/header.html",
 		"templates/layouts/sidebar.html",
