@@ -7,9 +7,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link
-  rel="stylesheet"
-  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+  />
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <style>
@@ -53,8 +53,9 @@
         </div>
       </div>
 
-      <!-- Recent Tasks -->
+      <!-- Recent Tasks & Calendar -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Tasks -->
         <div class="bg-white p-6 rounded-2xl shadow-md">
           <h2 class="text-lg font-semibold mb-4 text-gray-700">Recent Tasks</h2>
           <div class="space-y-4">
@@ -81,17 +82,52 @@
           </div>
         </div>
 
-        <!-- Calendar + Messages -->
+        <!-- Calendar -->
         <div class="bg-white p-6 rounded-2xl shadow-md">
           <h2 class="text-lg font-semibold mb-4 text-gray-700">Calendar</h2>
-          <div class="text-sm text-gray-500 mb-4">📅 Coming soon...</div>
-          <h2 class="text-lg font-semibold mb-3 text-gray-700">Messages</h2>
-          <ul class="text-sm text-gray-600 space-y-2">
-            <li><b>Ann Johnson:</b> Meeting at 3 PM.</li>
-            <li><b>Paul Smith:</b> Update on design task.</li>
-            <li><b>Larry Jones:</b> Submitted weekly report.</li>
-          </ul>
+            <!-- Calendar -->
+            <div x-data="calendar()" class="p-4 border border-gray-200 rounded-xl text-center select-none mb-6">
+              <div class="flex justify-between items-center mb-3">
+                <h3 class="font-semibold text-gray-700" x-text="monthNames[month] + ' ' + year"></h3>
+                <div class="space-x-2">
+                  <button 
+                    @click="prevMonth" 
+                    class="rounded-full bg-gray-100 hover:bg-indigo-100 text-gray-600 hover:text-indigo-600 transition">
+                    <i class="fas fa-arrow-left px-2"></i>
+                  </button>
+                  <button 
+                    @click="nextMonth" 
+                    class="rounded-full bg-gray-100 hover:bg-indigo-100 text-gray-600 hover:text-indigo-600 transition">
+                    <i class="fas fa-arrow-right px-2"></i>
+                  </button>
+                </div>
+              </div>
+
+            <div class="grid grid-cols-7 gap-1 text-xs font-semibold text-gray-500 mb-1">
+              <template x-for="d in dayNames" :key="d">
+                <div x-text="d"></div>
+              </template>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-sm">
+              <template x-for="blank in blanks" :key="'b'+blank">
+                <div></div>
+              </template>
+              <template x-for="day in daysInMonth" :key="day">
+                <div
+                  class="p-2 rounded-full hover:bg-indigo-200 cursor-pointer"
+                  :class="{'bg-indigo-500 text-white font-semibold': day === date && month === currentMonth && year === currentYear}"
+                  x-text="day"
+                ></div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Real-time Clock -->
+          <div x-data="clock()" class="text-center mt-4">
+            <p class="text-sm text-indigo-500" x-text="timeString"></p>
+          </div>
         </div>
+
       </div>
     </main>
 
@@ -99,7 +135,46 @@
     {{template "layouts/footer.html" .}}
   </div>
 
+  <!-- Calendar Script -->
+  <script>
+    function calendar() {
+      const today = new Date();
+      return {
+        currentMonth: today.getMonth(),
+        currentYear: today.getFullYear(),
+        month: today.getMonth(),
+        year: today.getFullYear(),
+        date: today.getDate(),
+        dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+        monthNames: [
+          'January', 'February', 'March', 'April', 'May', 'June',
+          'July', 'August', 'September', 'October', 'November', 'December'
+        ],
+        get daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
+        get blanks() { return new Date(this.year, this.month, 1).getDay(); },
+        nextMonth() { if (this.month === 11) { this.month = 0; this.year++; } else { this.month++; } },
+        prevMonth() { if (this.month === 0) { this.month = 11; this.year--; } else { this.month--; } }
+      }
+    }
+
+    function clock() {
+      return {
+        timeString: '',
+        init() {
+          this.updateTime();
+          setInterval(() => this.updateTime(), 1000);
+        },
+        updateTime() {
+          const now = new Date();
+          const options = { weekday: 'long' };
+          const day = now.toLocaleDateString('en-US', options);
+          const time = now.toLocaleTimeString('en-US', { hour12: false });
+          this.timeString = `Today is ${day}, ${time}`;
+        }
+      }
+    }
+  </script>
+
 </body>
 </html>
-
 {{end}}
