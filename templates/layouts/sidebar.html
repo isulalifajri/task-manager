@@ -1,14 +1,17 @@
-{{define "layouts/sidebar.html"}}
+{{define "sidebar"}}
 <aside 
-  x-data="{ open: window.innerWidth >= 768 }"
+  x-data="{ open: false }"
+  x-init="open = window.innerWidth >= 768"
+  x-cloak
   @toggle-sidebar.window="open = !open"
   @resize.window="open = window.innerWidth >= 768"
 >
-  <!-- Overlay (hanya muncul di mobile) -->
+  <!-- Overlay mobile -->
   <div 
     x-show="open && window.innerWidth < 768"
+    x-transition.opacity
     @click="open = false"
-    class="fixed inset-0 bg-black/40 z-40 transition-opacity md:hidden"
+    class="fixed inset-0 bg-black/40 z-40"
   ></div>
 
   <!-- Sidebar utama -->
