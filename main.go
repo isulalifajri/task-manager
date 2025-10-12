@@ -19,20 +19,24 @@ func main() {
 	// === Router utama ===
 	router := mux.NewRouter()
 
-	// === Simpan router ke package handlers ===
-	handlers.Router = router
-
 	// === Routes dengan nama ===
 	router.HandleFunc("/dashboard", handlers.DashboardHandler).
 		Name("dashboard").
 		Methods("GET")
 
-	// === Static files (CSS, JS, gambar, dll) ===
+	router.HandleFunc("/users", handlers.UsersHandler).
+		Name("users").
+		Methods("GET")
+
+	// === Simpan router ke package handlers (setelah semua routes terdaftar) ===
+	handlers.Router = router
+
+	// === Static files ===
 	router.PathPrefix("/static/").Handler(
 		http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
 	)
 
-	// === Middleware (logging + CORS) ===
+	// === Middleware ===
 	handlerWithMiddleware := middlewares.LoggingMiddleware(
 		middlewares.CORSMiddleware(router),
 	)

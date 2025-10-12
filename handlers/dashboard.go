@@ -33,10 +33,15 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	database.DB.Model(&models.User{}).Count(&totalUsers)
 
 	// Ambil URL dari named route
-	var dashboardURL string
+	var dashboardURL, usersURL string
+
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
+	}
+	if route := Router.Get("users"); route != nil {
+		u, _ := route.URL()
+		usersURL = u.String()
 	}
 
 	// Kirim semua data ke template
@@ -48,7 +53,9 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
 		"TotalUsers":    totalUsers,
 		"CurrentPath":   r.URL.Path,
 		"DashboardURL":  dashboardURL,
+		"UsersURL":      usersURL,
 	}
+
 
 	tmpl := template.New("").Funcs(template.FuncMap{
 		"year":      func() int { return time.Now().Year() },
