@@ -17,18 +17,23 @@
   <!-- Sidebar -->
   {{template "sidebar" .}}
 
-  <div class="flex-1 flex flex-col min-h-screen">
-    <!-- Header -->
-    {{template "header" .}}
-
-    <!-- Konten unik tiap halaman -->
-    <main class="flex-1 p-6 overflow-y-auto overflow-x-hidden">
-      {{block "content" .}}{{end}}
-    </main>
-
-    <!-- Footer -->
-    {{template "footer" .}}
+  <div class="grid w-full">
+      {{template "header" .}}
+      <!-- Konten utama -->
+      <div class="flex-1 flex flex-col overflow-x-auto">
+          <!-- Header sticky -->
+      
+          <!-- Main scrollable -->
+          <main class="flex-1 p-6">
+            {{block "content" .}}{{end}}
+          </main>
+      
+          <!-- Footer -->
+          {{template "footer" .}}
+    
+      </div>
   </div>
 </body>
+
 </html>
 {{end}}
