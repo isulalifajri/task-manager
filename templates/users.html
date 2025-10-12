@@ -17,6 +17,14 @@
       font-family: 'Inter', sans-serif;
       background-color: #f7f8fc;
     }
+    ::-webkit-scrollbar {
+      height: 7px;
+      width: 5px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.5);
+      border-radius: 9999px;
+    }
   </style>
 </head>
 
@@ -26,60 +34,111 @@
   {{template "layouts/sidebar.html" .}}
 
   <!-- Main -->
-  <div class="flex-1 flex flex-col">
+  <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
     <!-- Header -->
     {{template "layouts/header.html" .}}
 
-    <main class="p-6 flex-1 overflow-y-auto">
-      <h1 class="text-2xl font-bold mb-6 text-gray-700">Hi, John! 👋</h1>    
-      
-      tesdfs cuysss
+    <!-- Scrollable content -->
+    <main class="flex-1 p-6 overflow-y-auto overflow-x-hidden">
+      <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+        <h1 class="text-2xl font-bold text-gray-700">User Management</h1>
+        <a href="/users/create"
+          class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+          <i class="fas fa-plus mr-2"></i> Create User
+        </a>
+      </div>
+
+      <!-- Table wrapper: overflow horizontal aktif -->
+      <div class="bg-white shadow-md rounded-xl overflow-hidden">
+        <div class="w-full overflow-x-auto">
+            <table class="min-w-full border border-gray-200">
+                <thead class="bg-gray-100 text-gray-600 text-sm uppercase">
+                <tr>
+                    <th class="px-6 py-3 text-left">#</th>
+                    <th class="px-6 py-3 text-left">Name</th>
+                    <th class="px-6 py-3 text-left">Username</th>
+                    <th class="px-6 py-3 text-left">Email</th>
+                    <th class="px-6 py-3 text-left">Role</th>
+                    <th class="px-6 py-3 text-center">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-gray-700 text-sm sm:text-base">
+                {{range $i, $u := .Users}}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-3 whitespace-nowrap">{{$i | add 1}}</td>
+                    <td class="px-6 py-3 font-semibold whitespace-nowrap">{{$u.Name}}</td>
+                    <td class="px-6 py-3 whitespace-nowrap">{{$u.Username}}</td>
+                    <td class="px-6 py-3 whitespace-nowrap">{{$u.Email}}</td>
+                    <td class="px-6 py-3 whitespace-nowrap">
+                    {{if $u.Role.Name}}
+                        {{if eq $u.Role.Name "Admin"}}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">
+                            {{$u.Role.Name}}
+                        </span>
+                        {{else if eq $u.Role.Name "Manager"}}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+                            {{$u.Role.Name}}
+                        </span>
+                        {{else if eq $u.Role.Name "Staff"}}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+                            {{$u.Role.Name}}
+                        </span>
+                        {{else}}
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700">
+                            {{$u.Role.Name}}
+                        </span>
+                        {{end}}
+                    {{else}}
+                        <span class="text-gray-400 italic">-</span>
+                    {{end}}
+                    </td>
+                    <td class="px-6 py-3 text-center whitespace-nowrap space-x-2">
+                    <a href="/users/edit/{{$u.ID}}" class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="/users/delete/{{$u.ID}}" 
+                        onclick="return confirm('Yakin ingin menghapus user ini?')"
+                        class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="6" class="text-center py-6 text-gray-500">Belum ada user.</td>
+                </tr>
+                {{end}}
+                </tbody>
+            </table>
+            <!-- Pagination -->
+            <div class="flex justify-center items-center py-4 gap-2 text-sm">
+                {{if gt .Page 1}}
+                <a href="?page={{sub .Page 1}}" class="px-3 py-1 rounded-lg border hover:bg-gray-100">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {{end}}
+
+                {{range $i := until .TotalPages}}
+                <a href="?page={{add $i 1}}"
+                    class="px-3 py-1 rounded-lg border 
+                    {{if eq $.Page (add $i 1)}}bg-indigo-600 text-white border-indigo-600{{else}}hover:bg-gray-100{{end}}">
+                    {{add $i 1}}
+                </a>
+                {{end}}
+
+                {{if lt .Page .TotalPages}}
+                <a href="?page={{add .Page 1}}" class="px-3 py-1 rounded-lg border hover:bg-gray-100">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {{end}}
+            </div>
+        </div>
+      </div>
     </main>
 
     <!-- Footer -->
     {{template "layouts/footer.html" .}}
   </div>
-
-  <!-- Calendar Script -->
-  <script>
-    function calendar() {
-      const today = new Date();
-      return {
-        currentMonth: today.getMonth(),
-        currentYear: today.getFullYear(),
-        month: today.getMonth(),
-        year: today.getFullYear(),
-        date: today.getDate(),
-        dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-        monthNames: [
-          'January', 'February', 'March', 'April', 'May', 'June',
-          'July', 'August', 'September', 'October', 'November', 'December'
-        ],
-        get daysInMonth() { return new Date(this.year, this.month + 1, 0).getDate(); },
-        get blanks() { return new Date(this.year, this.month, 1).getDay(); },
-        nextMonth() { if (this.month === 11) { this.month = 0; this.year++; } else { this.month++; } },
-        prevMonth() { if (this.month === 0) { this.month = 11; this.year--; } else { this.month--; } }
-      }
-    }
-
-    function clock() {
-      return {
-        timeString: '',
-        init() {
-          this.updateTime();
-          setInterval(() => this.updateTime(), 1000);
-        },
-        updateTime() {
-          const now = new Date();
-          const options = { weekday: 'long' };
-          const day = now.toLocaleDateString('en-US', options);
-          const time = now.toLocaleTimeString('en-US', { hour12: false });
-          this.timeString = `Today is ${day}, ${time}`;
-        }
-      }
-    }
-  </script>
-
 </body>
 </html>
 {{end}}

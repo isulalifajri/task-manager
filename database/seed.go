@@ -24,6 +24,9 @@ func Seed() {
 		{Name: "Hening", Username: "hening", Email: "hening@example.com", Password: hashPassword("123456"), RoleID: 2},
 		{Name: "Dwi", Username: "dwi", Email: "dwi@example.com", Password: hashPassword("123456"), RoleID: 3},
 		{Name: "Raka", Username: "raka", Email: "raka@example.com", Password: hashPassword("123456"), RoleID: 4},
+		{Name: "Langit", Username: "langit", Email: "langit@example.com", Password: hashPassword("123456"), RoleID: 1},
+		{Name: "Flower", Username: "flower", Email: "flower@example.com", Password: hashPassword("123456"), RoleID: 3},
+		{Name: "Melati", Username: "melati", Email: "melati@example.com", Password: hashPassword("123456"), RoleID: 4},
 	}
 	DB.Create(&users)
 	fmt.Println("Users siap!")

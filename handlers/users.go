@@ -5,52 +5,82 @@ import (
 	"net/http"
 	"task-manager/database"
 	"task-manager/models"
-
-	"github.com/gorilla/mux"
+	"runtime"
+	"time"
+	"strconv"
+	"math"
 )
 
 func UsersHandler(w http.ResponseWriter, r *http.Request) {
-	// Ambil semua user dari database
-	var users []models.User
-	database.DB.Preload("Role").Find(&users)
+    // Ambil query params untuk pagination
+    pageStr := r.URL.Query().Get("page")
+    const pageSize = 5 // tampilkan 5 per halaman
+    page := 1
+    if pageStr != "" {
+        if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+            page = p
+        }
+    }
 
-	// Ambil URL dashboard (biar sidebar tetap bisa pakai)
-	var dashboardURL string
-	if route := Router.Get("dashboard"); route != nil {
-		u, _ := route.URL()
-		dashboardURL = u.String()
-	}
+    // Hitung offset
+    offset := (page - 1) * pageSize
 
-	// Ambil URL users (biar sidebar pakai {{.UsersURL}})
-	var usersURL string
-	if route := Router.Get("users"); route != nil {
-		u, _ := route.URL()
-		usersURL = u.String()
-	}
+    // Ambil total user (buat pagination info)
+    var total int64
+    database.DB.Model(&models.User{}).Count(&total)
 
-	// Data untuk dikirim ke template
-	data := map[string]interface{}{
-		"Users":        users,
-		"CurrentPath":  r.URL.Path,
-		"DashboardURL": dashboardURL,
-		"UsersURL":     usersURL,
-	}
+    // Ambil user dengan limit + offset
+    var users []models.User
+    database.DB.Preload("Role").
+        Limit(pageSize).
+        Offset(offset).
+        Find(&users)
 
-	// Load template
-	tmpl := template.New("").Funcs(template.FuncMap{
-		"year":      func() int { return time.Now().Year() },
-		"goversion": func() string { return runtime.Version() },
-	})
+    totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
 
-	tmpl = template.Must(tmpl.ParseFiles(
-		"templates/users.html",
-		"templates/layouts/header.html",
-		"templates/layouts/sidebar.html",
-		"templates/layouts/footer.html",
-	))
+    // Ambil URL dashboard (biar sidebar tetap pakai)
+    var dashboardURL, usersURL string
+    if route := Router.Get("dashboard"); route != nil {
+        u, _ := route.URL()
+        dashboardURL = u.String()
+    }
+    if route := Router.Get("users"); route != nil {
+        u, _ := route.URL()
+        usersURL = u.String()
+    }
 
-	err := tmpl.ExecuteTemplate(w, "users.html", data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+    data := map[string]interface{}{
+        "Users":        users,
+        "CurrentPath":  r.URL.Path,
+        "DashboardURL": dashboardURL,
+        "UsersURL":     usersURL,
+        "Page":         page,
+        "TotalPages":   totalPages,
+    }
+
+    tmpl := template.New("").Funcs(template.FuncMap{
+        "year":      func() int { return time.Now().Year() },
+        "goversion": func() string { return runtime.Version() },
+        "add":       func(a, b int) int { return a + b },
+        "sub":       func(a, b int) int { return a - b },
+		"until":     func(n int) []int {
+			a := make([]int, n)
+			for i := 0; i < n; i++ {
+				a[i] = i
+			}
+			return a
+		},
+    })
+
+    tmpl = template.Must(tmpl.ParseFiles(
+        "templates/users.html",
+        "templates/layouts/header.html",
+        "templates/layouts/sidebar.html",
+        "templates/layouts/footer.html",
+    ))
+
+    err := tmpl.ExecuteTemplate(w, "users.html", data)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 }
