@@ -11,6 +11,7 @@ import (
 	"time"
 	"task-manager/database"
 	"task-manager/models"
+	"gorm.io/gorm"
 
 	"golang.org/x/crypto/bcrypt"
 	"github.com/gorilla/mux"
@@ -178,8 +179,12 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
+    sess, _ := store.Get(r, "session-name") // ambil session
+
     if err := r.ParseForm(); err != nil {
-        http.Error(w, "Form tidak valid", http.StatusBadRequest)
+        sess.AddFlash("Form tidak valid: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
@@ -188,15 +193,23 @@ func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
     // Cek dulu username unik
     var existingUser models.User
     if err := database.DB.Where("username = ?", username).First(&existingUser).Error; err == nil {
-        // Username sudah ada
-        http.Error(w, "Username sudah digunakan, coba yang lain.", http.StatusBadRequest)
+        sess.AddFlash("Username sudah digunakan, coba yang lain.", "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
+        return
+    } else if err != gorm.ErrRecordNotFound {
+        sess.AddFlash("Gagal mengecek username: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
     password := r.FormValue("password")
     hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
     if err != nil {
-        http.Error(w, "Gagal memproses password", http.StatusInternalServerError)
+        sess.AddFlash("Gagal memproses password: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
@@ -211,10 +224,14 @@ func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     if err := database.DB.Create(&user).Error; err != nil {
-        http.Error(w, "Gagal menyimpan user, silakan coba lagi.", http.StatusInternalServerError)
+        sess.AddFlash("Gagal menyimpan user: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
+    sess.AddFlash("User berhasil dibuat", "success")
+    sess.Save(r, w)
     http.Redirect(w, r, "/users", http.StatusSeeOther)
 }
 
@@ -288,53 +305,61 @@ func EditUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+    sess, _ := store.Get(r, "session-name")
+
     vars := mux.Vars(r)
     idStr := vars["id"]
     id, err := strconv.Atoi(idStr)
     if err != nil {
-        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        sess.AddFlash("ID user tidak valid: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
-    // Parse form
     if err := r.ParseForm(); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
+        sess.AddFlash("Form tidak valid: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
-    // Ambil user dari DB
     var user models.User
     if err := database.DB.First(&user, id).Error; err != nil {
-        http.Error(w, "User not found", http.StatusNotFound)
+        sess.AddFlash("User tidak ditemukan: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
-    // Update fields
     user.Name = r.FormValue("name")
     user.Username = r.FormValue("username")
     user.Email = r.FormValue("email")
 
-    // Update role
     roleID, _ := strconv.Atoi(r.FormValue("role_id"))
     user.RoleID = uint(roleID)
 
-    // Update password kalau ada input baru
     password := r.FormValue("password")
     if password != "" {
         hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
         if err != nil {
-            http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+            sess.AddFlash("Gagal mengubah password: "+err.Error(), "error")
+            sess.Save(r, w)
+            http.Redirect(w, r, "/users", http.StatusSeeOther)
             return
         }
         user.Password = string(hashed)
     }
 
-    // Simpan perubahan
     if err := database.DB.Save(&user).Error; err != nil {
-        http.Error(w, "Failed to update user", http.StatusInternalServerError)
+        sess.AddFlash("Gagal memperbarui user: "+err.Error(), "error")
+        sess.Save(r, w)
+        http.Redirect(w, r, "/users", http.StatusSeeOther)
         return
     }
 
+    sess.AddFlash("User berhasil diperbarui", "success")
+    sess.Save(r, w)
     http.Redirect(w, r, "/users", http.StatusSeeOther)
 }
 
