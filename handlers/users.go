@@ -40,7 +40,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	// Ambil URL dashboard & users dari router (untuk sidebar)
-	var dashboardURL, usersURL string
+	var dashboardURL, usersURL, createUsersURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
@@ -49,6 +49,10 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		u, _ := route.URL()
 		usersURL = u.String()
 	}
+	if route := Router.Get("users.create"); route != nil {
+		u, _ := route.URL()
+		createUsersURL = u.String()
+	}
 
 	// Data untuk template
 	data := map[string]interface{}{
@@ -56,6 +60,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"CurrentPath":  r.URL.Path,
 		"DashboardURL": dashboardURL,
 		"UsersURL":     usersURL,
+		"CreateUsersURL": createUsersURL,
 		"Page":         page,
 		"Limit":        limit,
 		"TotalPages":   totalPages,
@@ -98,27 +103,43 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
-	data := map[string]interface{}{}
+    // Ambil URL dashboard & users (untuk sidebar)
+    var dashboardURL, usersURL string
+    if route := Router.Get("dashboard"); route != nil {
+        u, _ := route.URL()
+        dashboardURL = u.String()
+    }
+    if route := Router.Get("users"); route != nil {
+        u, _ := route.URL()
+        usersURL = u.String()
+    }
 
-	// Template functions
-	funcs := template.FuncMap{
-		"year": func() int { return time.Now().Year() },
-	}
+    data := map[string]interface{}{
+        "CurrentPath":  r.URL.Path,
+        "DashboardURL": dashboardURL,
+        "UsersURL":     usersURL,
+    }
 
-	tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
-		"templates/layouts/base.html",
-		"templates/layouts/header.html",
-		"templates/layouts/sidebar.html",
-		"templates/layouts/footer.html",
-		"templates/user_create.html", // form create user
-	))
+    funcs := template.FuncMap{
+        "year":      func() int { return time.Now().Year() },
+        "goversion": func() string { return runtime.Version() },
+        "add":       func(a, b int) int { return a + b },
+        "hasPrefix": func(s, prefix string) bool { return strings.HasPrefix(s, prefix) },
+    }
 
-	err := tmpl.ExecuteTemplate(w, "base", data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+    tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
+        "templates/layouts/base.html",
+        "templates/layouts/header.html",
+        "templates/layouts/sidebar.html",
+        "templates/layouts/footer.html",
+        "templates/users/user_create.html",
+    ))
+
+    err := tmpl.ExecuteTemplate(w, "base", data)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 }
-
 
 func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
