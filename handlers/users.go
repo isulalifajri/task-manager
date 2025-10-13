@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"html/template"
 	"math"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"task-manager/models"
 
 	"golang.org/x/crypto/bcrypt"
+	"github.com/gorilla/mux"
 )
 
 func UsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +43,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	// Ambil URL dashboard & users dari router (untuk sidebar)
-	var dashboardURL, usersURL, createUsersURL string
+	var dashboardURL, usersURL, createUsersURL, editUsersURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
@@ -54,6 +56,10 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		u, _ := route.URL()
 		createUsersURL = u.String()
 	}
+	if route := Router.Get("users.edit"); route != nil {
+		u, _ := route.URL("id", "0")
+		editUsersURL = u.String()
+	}
 
 	// Data untuk template
 	data := map[string]interface{}{
@@ -62,6 +68,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"DashboardURL": dashboardURL,
 		"UsersURL":     usersURL,
 		"CreateUsersURL": createUsersURL,
+		"EditUserURL":    editUsersURL,
 		"Page":         page,
 		"Limit":        limit,
 		"TotalPages":   totalPages,
@@ -81,6 +88,9 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 				a[i] = i
 			}
 			return a
+		},
+		"editURL": func(base string, id uint) string {
+			return strings.Replace(base, "0", fmt.Sprintf("%d", id), 1)
 		},
 		"hasPrefix": func(s, prefix string) bool {
 			return strings.HasPrefix(s, prefix)
@@ -194,5 +204,127 @@ func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
 
     http.Redirect(w, r, "/users", http.StatusSeeOther)
 }
+
+func EditUserHandler(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    // Ambil URL dashboard, users, dan store (update)
+    var dashboardURL, usersURL, updateUserURL string
+    if route := Router.Get("dashboard"); route != nil {
+        u, _ := route.URL()
+        dashboardURL = u.String()
+    }
+    if route := Router.Get("users"); route != nil {
+        u, _ := route.URL()
+        usersURL = u.String()
+    }
+    if route := Router.Get("users.update"); route != nil {
+        u, _ := route.URL("id", idStr)
+        updateUserURL = u.String()
+    }
+
+    // Ambil semua roles dari DB
+    var roles []models.Role
+    if err := database.DB.Find(&roles).Error; err != nil {
+        http.Error(w, "Failed to get roles", http.StatusInternalServerError)
+        return
+    }
+
+    // Ambil user berdasarkan ID
+    var user models.User
+    if err := database.DB.First(&user, id).Error; err != nil {
+        http.Error(w, "User not found", http.StatusNotFound)
+        return
+    }
+
+    // Data untuk template
+    data := map[string]interface{}{
+        "CurrentPath":   r.URL.Path,
+        "DashboardURL":  dashboardURL,
+        "UsersURL":      usersURL,
+        "UpdateUserURL": updateUserURL,
+        "Roles":         roles,
+        "User":          user,
+        "Errors": map[string]string{},
+    }
+
+    funcs := template.FuncMap{
+        "year":      func() int { return time.Now().Year() },
+        "goversion": func() string { return runtime.Version() },
+        "add":       func(a, b int) int { return a + b },
+        "hasPrefix": func(s, prefix string) bool { return strings.HasPrefix(s, prefix) },
+    }
+
+    tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
+        "templates/layouts/base.html",
+        "templates/layouts/header.html",
+        "templates/layouts/sidebar.html",
+        "templates/layouts/footer.html",
+        "templates/users/user_form.html",
+    ))
+
+    if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
+}
+
+func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    // Parse form
+    if err := r.ParseForm(); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
+
+    // Ambil user dari DB
+    var user models.User
+    if err := database.DB.First(&user, id).Error; err != nil {
+        http.Error(w, "User not found", http.StatusNotFound)
+        return
+    }
+
+    // Update fields
+    user.Name = r.FormValue("name")
+    user.Username = r.FormValue("username")
+    user.Email = r.FormValue("email")
+
+    // Update role
+    roleID, _ := strconv.Atoi(r.FormValue("role_id"))
+    user.RoleID = uint(roleID)
+
+    // Update password kalau ada input baru
+    password := r.FormValue("password")
+    if password != "" {
+        hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+        if err != nil {
+            http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+            return
+        }
+        user.Password = string(hashed)
+    }
+
+    // Simpan perubahan
+    if err := database.DB.Save(&user).Error; err != nil {
+        http.Error(w, "Failed to update user", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, "/users", http.StatusSeeOther)
+}
+
+
 
 

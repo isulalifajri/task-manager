@@ -53,7 +53,7 @@
                 {{end}}
                 </td>
                 <td class="px-6 py-3 text-center whitespace-nowrap space-x-2">
-                <a href="/users/edit/{{$u.ID}}" class="text-blue-600 hover:text-blue-800">
+                <a href="{{editURL $.EditUserURL $u.ID}}" class="text-blue-600 hover:text-blue-800">
                     <i class="fas fa-edit"></i>
                 </a>
                 <a href="/users/delete/{{$u.ID}}" 
