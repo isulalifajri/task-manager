@@ -6,6 +6,7 @@ import (
 	"task-manager/database"
 	"task-manager/models"
 	"runtime"
+    "strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -57,6 +58,9 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
     funcs := template.FuncMap{
         "year":      func() int { return time.Now().Year() },
         "goversion": func() string { return runtime.Version() },
+        "hasPrefix": func(s, prefix string) bool {
+			return strings.HasPrefix(s, prefix)
+		},
     }
 
     tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(

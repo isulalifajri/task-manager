@@ -25,7 +25,6 @@
             <tbody class="divide-y divide-gray-100 text-gray-700 text-sm sm:text-base">
             {{range $i, $u := .Users}}
             <tr class="hover:bg-gray-50 transition">
-                <!-- <td class="px-6 py-3 whitespace-nowrap">{{$i | add 1}}</td> -->
                 <td class="px-6 py-3 whitespace-nowrap">{{$i | add 1 | add $.Offset}}</td>
                 <td class="px-6 py-3 font-semibold whitespace-nowrap">{{$u.Name}}</td>
                 <td class="px-6 py-3 whitespace-nowrap">{{$u.Username}}</td>

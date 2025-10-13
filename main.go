@@ -19,13 +19,18 @@ func main() {
 	// === Router utama ===
 	router := mux.NewRouter()
 
-	// === Routes dengan nama ===
+	// === Routes dashboard ===
 	router.HandleFunc("/dashboard", handlers.DashboardHandler).
 		Name("dashboard").
 		Methods("GET")
 
+	// users
 	router.HandleFunc("/users", handlers.UsersHandler).
 		Name("users").
+		Methods("GET")
+
+	router.HandleFunc("/users/create", handlers.CreateUserHandler).
+		Name("users.create").
 		Methods("GET")
 
 	// === Simpan router ke package handlers (setelah semua routes terdaftar) ===

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	"task-manager/database"
@@ -75,6 +76,9 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			return a
 		},
+		"hasPrefix": func(s, prefix string) bool {
+			return strings.HasPrefix(s, prefix)
+		},
 	}
 
 	// Load semua template (base layout + komponen)
@@ -83,7 +87,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"templates/layouts/header.html",
 		"templates/layouts/sidebar.html",
 		"templates/layouts/footer.html",
-		"templates/users.html",
+		"templates/users/users.html",
 	))
 
 	// Gunakan base layout
@@ -92,3 +96,51 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+	data := map[string]interface{}{}
+
+	// Template functions
+	funcs := template.FuncMap{
+		"year": func() int { return time.Now().Year() },
+	}
+
+	tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
+		"templates/layouts/base.html",
+		"templates/layouts/header.html",
+		"templates/layouts/sidebar.html",
+		"templates/layouts/footer.html",
+		"templates/user_create.html", // form create user
+	))
+
+	err := tmpl.ExecuteTemplate(w, "base", data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+
+func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user := models.User{
+		Name:     r.FormValue("name"),
+		Username: r.FormValue("username"),
+		Email:    r.FormValue("email"),
+	}
+
+	// Ambil role dari form
+	roleID, _ := strconv.Atoi(r.FormValue("role_id"))
+	user.RoleID = uint(roleID)
+
+	if err := database.DB.Create(&user).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/users", http.StatusSeeOther)
+}
+
