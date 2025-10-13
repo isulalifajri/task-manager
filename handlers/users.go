@@ -104,7 +104,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
     // Ambil URL dashboard & users (untuk sidebar)
-    var dashboardURL, usersURL string
+    var dashboardURL, usersURL, storeUsersURL string
     if route := Router.Get("dashboard"); route != nil {
         u, _ := route.URL()
         dashboardURL = u.String()
@@ -113,11 +113,23 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
         u, _ := route.URL()
         usersURL = u.String()
     }
+	if route := Router.Get("users.store"); route != nil {
+        u, _ := route.URL()
+        storeUsersURL = u.String()
+    }
+
+	var roles []models.Role
+    if err := database.DB.Find(&roles).Error; err != nil {
+        http.Error(w, "Failed to get roles", http.StatusInternalServerError)
+        return
+    }
 
     data := map[string]interface{}{
         "CurrentPath":  r.URL.Path,
         "DashboardURL": dashboardURL,
         "UsersURL":     usersURL,
+        "StoreUsersURL": storeUsersURL,
+		"Roles":        roles,
     }
 
     funcs := template.FuncMap{

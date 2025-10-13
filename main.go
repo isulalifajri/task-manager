@@ -33,6 +33,10 @@ func main() {
 		Name("users.create").
 		Methods("GET")
 
+	router.HandleFunc("/users/store", handlers.StoreUserHandler).
+		Name("users.store").
+		Methods("POST")
+
 	// === Simpan router ke package handlers (setelah semua routes terdaftar) ===
 	handlers.Router = router
 
