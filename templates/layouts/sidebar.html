@@ -62,9 +62,9 @@
 
       <!-- Tasks -->
       <li>
-        <a href="/tasks/html"
+        <a href="{{.TasksURL}}"
            class="flex items-center py-2 px-4 rounded-lg transition
-           {{if eq .CurrentPath "/tasks/html"}}bg-indigo-500 text-white font-semibold
+           {{if hasPrefix .CurrentPath "/tasks"}}bg-indigo-500 text-white font-semibold
            {{else}}text-gray-700 hover:bg-indigo-50 hover:text-indigo-600{{end}}">
           <i class="fas fa-tasks mr-3"></i> Tasks
         </a>

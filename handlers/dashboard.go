@@ -34,7 +34,7 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
     database.DB.Model(&models.User{}).Count(&totalUsers)
 
     // Ambil URL dari router global
-    var dashboardURL, usersURL string
+    var dashboardURL, usersURL, tasksURL string
     if route := Router.Get("dashboard"); route != nil {
         u, _ := route.URL()
         dashboardURL = u.String()
@@ -43,6 +43,10 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
         u, _ := route.URL()
         usersURL = u.String()
     }
+    if route := Router.Get("tasks"); route != nil {
+		u, _ := route.URL()
+		tasksURL = u.String()
+	}
 
     data := map[string]interface{}{
         "Tasks":        tasks,
@@ -53,6 +57,7 @@ func DashboardHandler(w http.ResponseWriter, r *http.Request) {
         "CurrentPath":  r.URL.Path,
         "DashboardURL": dashboardURL,
         "UsersURL":     usersURL,
+        "TasksURL":  tasksURL,
     }
 
     funcs := template.FuncMap{

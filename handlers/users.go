@@ -44,10 +44,14 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	// Ambil URL dari router
-	var dashboardURL, usersURL, createUsersURL, editUsersURL, deleteUserURL string
+	var dashboardURL, tasksURL, usersURL, createUsersURL, editUsersURL, deleteUserURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
+	}
+	if route := Router.Get("tasks"); route != nil {
+		u, _ := route.URL()
+		tasksURL = u.String()
 	}
 	if route := Router.Get("users"); route != nil {
 		u, _ := route.URL()
@@ -77,6 +81,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"Users":          users,
 		"CurrentPath":    r.URL.Path,
 		"DashboardURL":   dashboardURL,
+		"TasksURL":  tasksURL,
 		"UsersURL":       usersURL,
 		"CreateUsersURL": createUsersURL,
 		"EditUserURL":    editUsersURL,

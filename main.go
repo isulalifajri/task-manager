@@ -24,7 +24,7 @@ func main() {
 		Name("dashboard").
 		Methods("GET")
 
-	// users
+	// users route
 	router.HandleFunc("/users", handlers.UsersHandler).
 		Name("users").
 		Methods("GET")
@@ -48,6 +48,11 @@ func main() {
 	router.HandleFunc("/users/delete/{id}", handlers.DeleteUserHandler).
 		Name("users.delete").
 		Methods("POST")
+
+	// task route
+	router.HandleFunc("/tasks", handlers.TasksHandler).
+		Name("tasks").
+		Methods("GET")
 
 	// === Simpan router ke package handlers (setelah semua routes terdaftar) ===
 	handlers.Router = router
