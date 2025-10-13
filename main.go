@@ -44,6 +44,10 @@ func main() {
 	router.HandleFunc("/users/update/{id}", handlers.UpdateUserHandler).
 		Name("users.update").
 		Methods("POST")
+	
+	router.HandleFunc("/users/delete/{id}", handlers.DeleteUserHandler).
+		Name("users.delete").
+		Methods("POST")
 
 	// === Simpan router ke package handlers (setelah semua routes terdaftar) ===
 	handlers.Router = router

@@ -43,7 +43,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	// Ambil URL dashboard & users dari router (untuk sidebar)
-	var dashboardURL, usersURL, createUsersURL, editUsersURL string
+	var dashboardURL, usersURL, createUsersURL, editUsersURL, deleteUserURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
@@ -60,6 +60,10 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		u, _ := route.URL("id", "0")
 		editUsersURL = u.String()
 	}
+	if route := Router.Get("users.delete"); route != nil {
+		u, _ := route.URL("id", "0") // placeholder "0" nanti diganti per user
+		deleteUserURL = u.String()
+	}
 
 	// Data untuk template
 	data := map[string]interface{}{
@@ -69,6 +73,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"UsersURL":     usersURL,
 		"CreateUsersURL": createUsersURL,
 		"EditUserURL":    editUsersURL,
+		"DeleteUserURL":  deleteUserURL,
 		"Page":         page,
 		"Limit":        limit,
 		"TotalPages":   totalPages,
@@ -90,6 +95,9 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 			return a
 		},
 		"editURL": func(base string, id uint) string {
+			return strings.Replace(base, "0", fmt.Sprintf("%d", id), 1)
+		},
+		"deleteURL": func(base string, id uint) string {
 			return strings.Replace(base, "0", fmt.Sprintf("%d", id), 1)
 		},
 		"hasPrefix": func(s, prefix string) bool {
@@ -324,6 +332,24 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 
     http.Redirect(w, r, "/users", http.StatusSeeOther)
 }
+
+func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    idStr := vars["id"]
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    if err := database.DB.Delete(&models.User{}, id).Error; err != nil {
+        http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, "/users", http.StatusSeeOther)
+}
+
 
 
 
