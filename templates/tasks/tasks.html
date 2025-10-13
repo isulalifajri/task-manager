@@ -1,11 +1,61 @@
 {{define "title"}}Tasks | Task Manager{{end}}
 
 {{define "content"}}
-    <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
-    <h1 class="text-2xl font-bold text-gray-700">Tasks Management</h1>
-    <a href=""
-        class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
-        <i class="fas fa-plus mr-2"></i> Create Tasks
-    </a>
+<div class="flex justify-between items-center mb-6 flex-wrap gap-3">
+  <h1 class="text-2xl font-bold text-gray-700">Tasks Management</h1>
+  <a href="#"
+    class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+    <i class="fas fa-plus mr-2"></i> Create Task
+  </a>
+</div>
+
+<!-- Kanban Board -->
+<div class="overflow-x-auto pb-4">
+  <div class="flex gap-4 min-w-max">
+
+    <!-- Loop Status -->
+    {{range $status := list "ready" "in progress" "fix" "code review" "test" "done"}}
+    <div class="bg-gray-50 w-64 rounded-xl p-3 flex-shrink-0 border">
+      <h2 class="font-semibold text-gray-600 mb-3 uppercase text-sm">
+        {{$status | title}}
+      </h2>
+
+      <div class="space-y-3">
+        {{range $t := filterStatus $.Tasks $status}}
+        <div class="bg-white rounded-xl p-3 shadow-sm border-l-4 {{statusColor $t.Status}} hover:shadow-md transition">
+          <h3 class="font-semibold text-gray-700 mb-1">{{$t.Title}}</h3>
+          <p class="text-sm text-gray-500 line-clamp-2 mb-2">{{$t.Description}}</p>
+
+          <!-- Type & Priority -->
+          <div class="flex justify-between items-center mb-2">
+            <span class="inline-block text-xs px-2 py-1 rounded {{typeColor $t.Type}}">
+              {{$t.Type}}
+            </span>
+            <span class="text-xs font-medium {{priorityColor $t.Priority}}">
+              {{$t.Priority}}
+            </span>
+          </div>
+
+          <!-- Info bawah -->
+          <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+            <div class="flex items-center gap-1">
+              <i class="fas fa-link"></i>
+              <a href="{{$t.TaskLink}}" class="text-blue-600 hover:underline" target="_blank">Task</a>
+            </div>
+            <div class="bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">
+              {{substr $t.AssignedUser.Name 0 1}}
+            </div>
+          </div>
+        </div>
+        {{end}}
+
+        {{if not (hasTask $.Tasks $status)}}
+        <div class="text-center text-gray-400 text-sm italic py-6">No task</div>
+        {{end}}
+      </div>
     </div>
+    {{end}}
+
+  </div>
+</div>
 {{end}}

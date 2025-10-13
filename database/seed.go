@@ -2,12 +2,12 @@ package database
 
 import (
 	"fmt"
+	"time"
 	"task-manager/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Seed awal role, user, dan task
 func Seed() {
 	// ===== Roles =====
 	roles := []models.Role{
@@ -32,30 +32,81 @@ func Seed() {
 	fmt.Println("Users siap!")
 
 	// ===== Tasks =====
+	now := time.Now()
+	nextWeek := now.AddDate(0, 0, 7)
+
 	tasks := []models.Task{
 		{
-			Title:       "Setup project",
+			Title:       "Setup project structure",
 			Description: "Inisialisasi repo dan struktur folder",
-			Status:      "done",
+			Status:      "ready",
+			Type:        "Backend",
+			Priority:    "High",
+			StartDate:   &now,
+			DueDate:     &nextWeek,
 			AssignedTo:  2,
 			CreatedBy:   2,
 			TaskLink:    "https://example.com/task/1",
 		},
 		{
-			Title:       "Buat API task",
-			Description: "Implementasi CRUD task",
+			Title:       "Implementasi CRUD Task",
+			Description: "Buat API untuk create, update, delete task",
 			Status:      "in progress",
+			Type:        "Backend",
+			Priority:    "Critical",
+			StartDate:   &now,
+			DueDate:     &nextWeek,
 			AssignedTo:  2,
 			CreatedBy:   2,
 			TaskLink:    "https://example.com/task/2",
 		},
 		{
-			Title:       "Review code",
-			Description: "Periksa pull request",
-			Status:      "ready",
+			Title:       "Perbaiki validasi input",
+			Description: "Bug pada form task input",
+			Status:      "fix",
+			Type:        "Frontend",
+			Priority:    "Medium",
+			StartDate:   &now,
+			DueDate:     &nextWeek,
 			AssignedTo:  3,
 			CreatedBy:   2,
 			TaskLink:    "https://example.com/task/3",
+		},
+		{
+			Title:       "Review pull request API",
+			Description: "Periksa PR untuk modul task",
+			Status:      "code review",
+			Type:        "Backend",
+			Priority:    "High",
+			StartDate:   &now,
+			DueDate:     &nextWeek,
+			AssignedTo:  4,
+			CreatedBy:   2,
+			TaskLink:    "https://example.com/task/4",
+		},
+		{
+			Title:       "Testing fitur login",
+			Description: "QA untuk fitur login dan autentikasi",
+			Status:      "test",
+			Type:        "QA",
+			Priority:    "Medium",
+			StartDate:   &now,
+			DueDate:     &nextWeek,
+			AssignedTo:  5,
+			CreatedBy:   2,
+			TaskLink:    "https://example.com/task/5",
+		},
+		{
+			Title:       "Deploy ke staging",
+			Description: "Pastikan semua task sudah siap sebelum deploy",
+			Status:      "done",
+			Type:        "DevOps",
+			Priority:    "Low",
+			StartDate:   &now,
+			DueDate:     &nextWeek,
+			AssignedTo:  6,
+			CreatedBy:   2,
+			TaskLink:    "https://example.com/task/6",
 		},
 	}
 	DB.Create(&tasks)
