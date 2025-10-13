@@ -20,11 +20,33 @@
   <div class="grid w-full">
       {{template "header" .}}
       <!-- Konten utama -->
-      <div class="flex-1 flex flex-col overflow-x-auto">
-          <!-- Header sticky -->
-      
+      <div class="flex-1 flex flex-col overflow-x-auto">      
           <!-- Main scrollable -->
           <main class="flex-1 p-6">
+            <!-- Alert success -->
+            {{if .Success}}
+                {{range .Success}}
+                <div x-data="{ show: true }" x-show="show" 
+                    class="flex items-center justify-between bg-green-100 text-green-700 px-4 py-2 rounded mb-4">
+                    <span>{{.}}</span>
+                    <button @click="show = false" class="ml-4 font-bold">&times;</button>
+                </div>
+                {{end}}
+            {{end}}
+
+            <!-- Alert error -->
+            {{if .Error}}
+                {{range .Error}}
+                <div x-data="{ show: true }" x-show="show" 
+                    class="flex items-center justify-between bg-red-100 text-red-700 px-4 py-2 rounded mb-4 transition" 
+                    x-transition.duration.100ms>
+                    <span>{{.}}</span>
+                    <button @click="show = false" class="ml-4 font-bold">&times;</button>
+                </div>
+                {{end}}
+            {{end}}
+            
+            <!-- main content -->
             {{block "content" .}}{{end}}
           </main>
       

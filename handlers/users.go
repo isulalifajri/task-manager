@@ -14,35 +14,35 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 	"github.com/gorilla/mux"
+    "github.com/gorilla/sessions"
+
 )
+
+// Session store global
+var store = sessions.NewCookieStore([]byte("super-secret-key")) // Ganti dengan key aman
 
 func UsersHandler(w http.ResponseWriter, r *http.Request) {
 	// Ambil query params untuk pagination
 	pageStr := r.URL.Query().Get("page")
-	const limit = 5 // jumlah data per halaman
+	const limit = 5
 	page := 1
 	if pageStr != "" {
 		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
 			page = p
 		}
 	}
-
 	offset := (page - 1) * limit
 
-	// Hitung total data
+	// Ambil total user
 	var total int64
 	database.DB.Model(&models.User{}).Count(&total)
 
-	// Ambil data user (dengan relasi role)
+	// Ambil data user dengan relasi role
 	var users []models.User
-	database.DB.Preload("Role").
-		Limit(limit).
-		Offset(offset).
-		Find(&users)
-
+	database.DB.Preload("Role").Limit(limit).Offset(offset).Find(&users)
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
-	// Ambil URL dashboard & users dari router (untuk sidebar)
+	// Ambil URL dari router
 	var dashboardURL, usersURL, createUsersURL, editUsersURL, deleteUserURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
@@ -61,32 +61,40 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		editUsersURL = u.String()
 	}
 	if route := Router.Get("users.delete"); route != nil {
-		u, _ := route.URL("id", "0") // placeholder "0" nanti diganti per user
+		u, _ := route.URL("id", "0")
 		deleteUserURL = u.String()
 	}
 
+	// Ambil flash messages
+	sess, _ := store.Get(r, "session-name")
+	successFlashes := sess.Flashes("success")
+	errorFlashes := sess.Flashes("error")
+	sess.Save(r, w)
+
 	// Data untuk template
 	data := map[string]interface{}{
-		"Users":        users,
-		"CurrentPath":  r.URL.Path,
-		"DashboardURL": dashboardURL,
-		"UsersURL":     usersURL,
+		"Users":          users,
+		"CurrentPath":    r.URL.Path,
+		"DashboardURL":   dashboardURL,
+		"UsersURL":       usersURL,
 		"CreateUsersURL": createUsersURL,
 		"EditUserURL":    editUsersURL,
 		"DeleteUserURL":  deleteUserURL,
-		"Page":         page,
-		"Limit":        limit,
-		"TotalPages":   totalPages,
-		"Offset":       offset,
+		"Page":           page,
+		"Limit":          limit,
+		"TotalPages":     totalPages,
+		"Offset":         offset,
+		"Success":        successFlashes,
+		"Error":          errorFlashes,
 	}
 
 	// Template functions
 	funcs := template.FuncMap{
-		"year":      func() int { return time.Now().Year() },
+		"year": func() int { return time.Now().Year() },
 		"goversion": func() string { return runtime.Version() },
-		"add":       func(a, b int) int { return a + b },
-		"sub":       func(a, b int) int { return a - b },
-		"mul":       func(a, b int) int { return a * b },
+		"add": func(a, b int) int { return a + b },
+		"sub": func(a, b int) int { return a - b },
+		"mul": func(a, b int) int { return a * b },
 		"until": func(n int) []int {
 			a := make([]int, n)
 			for i := 0; i < n; i++ {
@@ -100,12 +108,10 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"deleteURL": func(base string, id uint) string {
 			return strings.Replace(base, "0", fmt.Sprintf("%d", id), 1)
 		},
-		"hasPrefix": func(s, prefix string) bool {
-			return strings.HasPrefix(s, prefix)
-		},
+		"hasPrefix": func(s, prefix string) bool { return strings.HasPrefix(s, prefix) },
 	}
 
-	// Load semua template (base layout + komponen)
+	// Load template
 	tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
 		"templates/layouts/base.html",
 		"templates/layouts/header.html",
@@ -114,7 +120,6 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"templates/users/users.html",
 	))
 
-	// Gunakan base layout
 	err := tmpl.ExecuteTemplate(w, "base", data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -334,23 +339,29 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUserHandler(w http.ResponseWriter, r *http.Request) {
-    vars := mux.Vars(r)
-    idStr := vars["id"]
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        http.Error(w, "Invalid user ID", http.StatusBadRequest)
-        return
-    }
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	sess, _ := store.Get(r, "session-name")
 
-    if err := database.DB.Delete(&models.User{}, id).Error; err != nil {
-        http.Error(w, "Failed to delete user", http.StatusInternalServerError)
-        return
-    }
+	if err != nil {
+		sess.AddFlash("ID user tidak valid", "error")
+		sess.Save(r, w)
+		http.Redirect(w, r, "/users", http.StatusSeeOther)
+		return
+	}
 
-    http.Redirect(w, r, "/users", http.StatusSeeOther)
+	if err := database.DB.Delete(&models.User{}, id).Error; err != nil {
+		sess.AddFlash("Gagal menghapus user", "error")
+		sess.Save(r, w)
+		http.Redirect(w, r, "/users", http.StatusSeeOther)
+		return
+	}
+
+	sess.AddFlash("User berhasil dihapus", "success")
+	sess.Save(r, w)
+	http.Redirect(w, r, "/users", http.StatusSeeOther)
 }
-
-
 
 
 
