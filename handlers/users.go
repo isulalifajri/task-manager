@@ -58,6 +58,7 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 		"Page":         page,
 		"Limit":        limit,
 		"TotalPages":   totalPages,
+		"Offset":       offset,
 	}
 
 	// Template functions
