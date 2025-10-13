@@ -8,9 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"task-manager/database"
 	"task-manager/models"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 func UsersHandler(w http.ResponseWriter, r *http.Request) {
@@ -154,26 +155,44 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func StoreUserHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+    if err := r.ParseForm(); err != nil {
+        http.Error(w, "Form tidak valid", http.StatusBadRequest)
+        return
+    }
 
-	user := models.User{
-		Name:     r.FormValue("name"),
-		Username: r.FormValue("username"),
-		Email:    r.FormValue("email"),
-	}
+    username := r.FormValue("username")
 
-	// Ambil role dari form
-	roleID, _ := strconv.Atoi(r.FormValue("role_id"))
-	user.RoleID = uint(roleID)
+    // Cek dulu username unik
+    var existingUser models.User
+    if err := database.DB.Where("username = ?", username).First(&existingUser).Error; err == nil {
+        // Username sudah ada
+        http.Error(w, "Username sudah digunakan, coba yang lain.", http.StatusBadRequest)
+        return
+    }
 
-	if err := database.DB.Create(&user).Error; err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+    password := r.FormValue("password")
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+    if err != nil {
+        http.Error(w, "Gagal memproses password", http.StatusInternalServerError)
+        return
+    }
 
-	http.Redirect(w, r, "/users", http.StatusSeeOther)
+    roleID, _ := strconv.Atoi(r.FormValue("role_id"))
+
+    user := models.User{
+        Name:     r.FormValue("name"),
+        Username: username,
+        Email:    r.FormValue("email"),
+        Password: string(hashedPassword),
+        RoleID:   uint(roleID),
+    }
+
+    if err := database.DB.Create(&user).Error; err != nil {
+        http.Error(w, "Gagal menyimpan user, silakan coba lagi.", http.StatusInternalServerError)
+        return
+    }
+
+    http.Redirect(w, r, "/users", http.StatusSeeOther)
 }
+
 
