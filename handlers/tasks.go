@@ -159,10 +159,14 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	var users []models.User
 	database.DB.Find(&users)
 
-	var dashboardURL, tasksURL, storeTaskURL string
+	var dashboardURL, usersURL, tasksURL, storeTaskURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
+	}
+	if route := Router.Get("users"); route != nil {
+		u, _ := route.URL()
+		usersURL = u.String()
 	}
 	if route := Router.Get("tasks"); route != nil {
 		u, _ := route.URL()
@@ -177,6 +181,7 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		"Users":         users,
 		"DashboardURL":  dashboardURL,
 		"TasksURL":      tasksURL,
+		"UsersURL":       usersURL,
 		"StoreTaskURL":  storeTaskURL,
 		"CurrentPath":   r.URL.Path,
 	}
