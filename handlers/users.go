@@ -134,10 +134,14 @@ func UsersHandler(w http.ResponseWriter, r *http.Request) {
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
     // Ambil URL dashboard & users (untuk sidebar)
-    var dashboardURL, usersURL, storeUsersURL string
+    var dashboardURL, taskURL, usersURL, storeUsersURL string
     if route := Router.Get("dashboard"); route != nil {
         u, _ := route.URL()
         dashboardURL = u.String()
+    }
+    if route := Router.Get("tasks"); route != nil {
+        u, _ := route.URL()
+        taskURL = u.String()
     }
     if route := Router.Get("users"); route != nil {
         u, _ := route.URL()
@@ -157,6 +161,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
     data := map[string]interface{}{
         "CurrentPath":  r.URL.Path,
         "DashboardURL": dashboardURL,
+        "TasksURL": taskURL,
         "UsersURL":     usersURL,
         "StoreUsersURL": storeUsersURL,
 		"Roles":        roles,
@@ -250,10 +255,14 @@ func EditUserHandler(w http.ResponseWriter, r *http.Request) {
     }
 
     // Ambil URL dashboard, users, dan store (update)
-    var dashboardURL, usersURL, updateUserURL string
+    var dashboardURL, taskURL, usersURL, updateUserURL string
     if route := Router.Get("dashboard"); route != nil {
         u, _ := route.URL()
         dashboardURL = u.String()
+    }
+	if route := Router.Get("tasks"); route != nil {
+        u, _ := route.URL()
+        taskURL = u.String()
     }
     if route := Router.Get("users"); route != nil {
         u, _ := route.URL()
@@ -282,6 +291,7 @@ func EditUserHandler(w http.ResponseWriter, r *http.Request) {
     data := map[string]interface{}{
         "CurrentPath":   r.URL.Path,
         "DashboardURL":  dashboardURL,
+        "TasksURL":  taskURL,
         "UsersURL":      usersURL,
         "UpdateUserURL": updateUserURL,
         "Roles":         roles,

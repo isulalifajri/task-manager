@@ -3,48 +3,57 @@ package handlers
 import (
 	"html/template"
 	"net/http"
+	"runtime"
+	"strconv"
 	"strings"
 	"time"
+
 	"task-manager/database"
 	"task-manager/models"
-	"runtime"
 )
 
-// TasksHandler menampilkan semua task
+// =======================
+// LIST TASKS (KANBAN)
+// =======================
 func TasksHandler(w http.ResponseWriter, r *http.Request) {
-	// Ambil semua task
 	var tasks []models.Task
-	database.DB.
-		Preload("AssignedUser").
-		Preload("Creator").
-		Find(&tasks)
+	database.DB.Preload("AssignedUser").Preload("Creator").Find(&tasks)
 
+	sess, _ := store.Get(r, "session-name")
+	successFlashes := sess.Flashes("success")
+	errorFlashes := sess.Flashes("error")
+	sess.Save(r, w)
 
-	// Ambil URL dari router untuk sidebar
-	var dashboardURL, tasksURL, usersURL string
+	// Ambil URL router
+	var dashboardURL, tasksURL, usersURL, createTaskURL string
 	if route := Router.Get("dashboard"); route != nil {
 		u, _ := route.URL()
 		dashboardURL = u.String()
 	}
-	if route := Router.Get("users"); route != nil {
-        u, _ := route.URL()
-        usersURL = u.String()
-    }
 	if route := Router.Get("tasks"); route != nil {
 		u, _ := route.URL()
 		tasksURL = u.String()
 	}
-
-	// Data untuk template
-	data := map[string]interface{}{
-		"Tasks":        tasks,
-		"CurrentPath":  r.URL.Path,
-		"DashboardURL": dashboardURL,
-		"UsersURL":     usersURL,
-		"TasksURL":     tasksURL,
+	if route := Router.Get("users"); route != nil {
+		u, _ := route.URL()
+		usersURL = u.String()
+	}
+	if route := Router.Get("tasks.create"); route != nil {
+		u, _ := route.URL()
+		createTaskURL = u.String()
 	}
 
-	// Template functions
+	data := map[string]interface{}{
+		"Tasks":        tasks,
+		"CreateTaskURL":  createTaskURL,
+		"DashboardURL":   dashboardURL,
+		"TasksURL":  tasksURL,
+		"UsersURL":       usersURL,
+		"CurrentPath":  r.URL.Path,
+		"Success":      successFlashes,
+		"Error":        errorFlashes,
+	}
+
 	funcs := template.FuncMap{
 		"year": func() int { return time.Now().Year() },
 		"goversion": func() string { return runtime.Version() },
@@ -54,98 +63,82 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
 		"list": func(values ...string) []string {
 			return values
 		},
-
-		// biar bisa filter task per status
+		"title": func(s string) string {
+			return strings.Title(s)
+		},
 		"filterStatus": func(tasks []models.Task, status string) []models.Task {
-			var filtered []models.Task
+			var result []models.Task
 			for _, t := range tasks {
-				if strings.EqualFold(t.Status, status) {
-					filtered = append(filtered, t)
+				if strings.ToLower(t.Status) == strings.ToLower(status) {
+					result = append(result, t)
 				}
 			}
-			return filtered
+			return result
 		},
-
-		// cek apakah ada task di status tertentu
 		"hasTask": func(tasks []models.Task, status string) bool {
 			for _, t := range tasks {
-				if strings.EqualFold(t.Status, status) {
+				if strings.ToLower(t.Status) == strings.ToLower(status) {
 					return true
 				}
 			}
 			return false
 		},
-
-		// biar capitalize
-		"title": strings.Title,
-
-		// ambil inisial
-		"substr": func(s string, start, length int) string {
-			if len(s) < start {
-				return ""
+		"substr": func(s string, start, end int) string {
+			if len(s) == 0 {
+				return "?"
 			}
-			end := start + length
+			if start < 0 {
+				start = 0
+			}
 			if end > len(s) {
 				end = len(s)
 			}
 			return s[start:end]
 		},
-
-		// warna border berdasarkan status
 		"statusColor": func(status string) string {
 			switch strings.ToLower(status) {
 			case "ready":
-				return "border-gray-300"
+				return "border-blue-400"
 			case "in progress":
 				return "border-yellow-400"
 			case "fix":
 				return "border-red-400"
 			case "code review":
-				return "border-orange-400"
+				return "border-indigo-400"
 			case "test":
-				return "border-blue-400"
+				return "border-orange-400"
 			case "done":
 				return "border-green-400"
 			default:
-				return "border-gray-200"
+				return "border-gray-300"
 			}
 		},
-
-		// warna type label
-		"typeColor": func(tp string) string {
-			switch strings.ToLower(tp) {
+		"typeColor": func(t string) string {
+			switch strings.ToLower(t) {
 			case "backend":
-				return "bg-blue-100 text-blue-700"
+				return "bg-purple-100 text-purple-700"
 			case "frontend":
-				return "bg-pink-100 text-pink-700"
+				return "bg-blue-100 text-blue-700"
 			case "qa":
-				return "bg-yellow-100 text-yellow-700"
-			case "devops":
-				return "bg-green-100 text-green-700"
+				return "bg-pink-100 text-pink-700"
 			default:
 				return "bg-gray-100 text-gray-700"
 			}
 		},
-
-		// warna priority
-		"priorityColor": func(priority string) string {
-			switch strings.ToLower(priority) {
-			case "low":
-				return "text-green-600"
-			case "medium":
-				return "text-yellow-600"
+		"priorityColor": func(p string) string {
+			switch strings.ToLower(p) {
 			case "high":
-				return "text-orange-600"
-			case "critical":
-				return "text-red-600 font-semibold"
+				return "text-red-500"
+			case "medium":
+				return "text-yellow-500"
+			case "low":
+				return "text-green-500"
 			default:
 				return "text-gray-500"
 			}
 		},
 	}
 
-
-	// Load template
 	tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
 		"templates/layouts/base.html",
 		"templates/layouts/header.html",
@@ -157,4 +150,122 @@ func TasksHandler(w http.ResponseWriter, r *http.Request) {
 	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+// ========================
+// SHOW CREATE FORM
+// ========================
+func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	var users []models.User
+	database.DB.Find(&users)
+
+	var dashboardURL, tasksURL, storeTaskURL string
+	if route := Router.Get("dashboard"); route != nil {
+		u, _ := route.URL()
+		dashboardURL = u.String()
+	}
+	if route := Router.Get("tasks"); route != nil {
+		u, _ := route.URL()
+		tasksURL = u.String()
+	}
+	if route := Router.Get("tasks.store"); route != nil {
+		u, _ := route.URL()
+		storeTaskURL = u.String()
+	}
+
+	data := map[string]interface{}{
+		"Users":         users,
+		"DashboardURL":  dashboardURL,
+		"TasksURL":      tasksURL,
+		"StoreTaskURL":  storeTaskURL,
+		"CurrentPath":   r.URL.Path,
+	}
+
+	funcs := template.FuncMap{
+		"year":      func() int { return time.Now().Year() },
+		"goversion": func() string { return runtime.Version() },
+		"hasPrefix": func(s, prefix string) bool { return strings.HasPrefix(s, prefix) },
+	}
+
+	tmpl := template.Must(template.New("base.html").Funcs(funcs).ParseFiles(
+		"templates/layouts/base.html",
+		"templates/layouts/header.html",
+		"templates/layouts/sidebar.html",
+		"templates/layouts/footer.html",
+		"templates/tasks/create.html",
+	))
+
+	if err := tmpl.ExecuteTemplate(w, "base", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// ========================
+// STORE TASK (POST)
+// ========================
+func StoreTaskHandler(w http.ResponseWriter, r *http.Request) {
+	sess, _ := store.Get(r, "session-name")
+
+	if err := r.ParseForm(); err != nil {
+		sess.AddFlash("Form tidak valid: "+err.Error(), "error")
+		sess.Save(r, w)
+		http.Redirect(w, r, "/tasks", http.StatusSeeOther)
+		return
+	}
+
+	// Parse tanggal
+	layout := "2006-01-02"
+	var startDate, dueDate *time.Time
+	if s := strings.TrimSpace(r.FormValue("start_date")); s != "" {
+		if t, err := time.Parse(layout, s); err == nil {
+			startDate = &t
+		}
+	}
+	if s := strings.TrimSpace(r.FormValue("due_date")); s != "" {
+		if t, err := time.Parse(layout, s); err == nil {
+			dueDate = &t
+		}
+	}
+
+	// Parse AssignedTo
+	var assignedTo uint
+	if at := strings.TrimSpace(r.FormValue("assigned_to")); at != "" {
+		if parsed, err := strconv.ParseUint(at, 10, 32); err == nil {
+			assignedTo = uint(parsed)
+		}
+	}
+
+	// Ambil CreatedBy dari session user_id
+	var createdBy uint = 1
+	if uid, ok := sess.Values["user_id"].(uint); ok {
+		createdBy = uid
+	} else if uidStr, ok := sess.Values["user_id"].(string); ok {
+		if parsed, err := strconv.ParseUint(uidStr, 10, 32); err == nil {
+			createdBy = uint(parsed)
+		}
+	}
+
+	task := models.Task{
+		Title:       r.FormValue("title"),
+		Description: r.FormValue("description"),
+		Type:        r.FormValue("type"),
+		Priority:    r.FormValue("priority"),
+		Status:      r.FormValue("status"),
+		TaskLink:    r.FormValue("task_link"),
+		StartDate:   startDate,
+		DueDate:     dueDate,
+		AssignedTo:  assignedTo,
+		CreatedBy:   createdBy,
+	}
+
+	if err := database.DB.Create(&task).Error; err != nil {
+		sess.AddFlash("Gagal menyimpan task: "+err.Error(), "error")
+		sess.Save(r, w)
+		http.Redirect(w, r, "/tasks", http.StatusSeeOther)
+		return
+	}
+
+	sess.AddFlash("Task berhasil dibuat", "success")
+	sess.Save(r, w)
+	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
 }

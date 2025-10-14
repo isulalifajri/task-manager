@@ -3,7 +3,7 @@
 {{define "content"}}
 <div class="flex justify-between items-center mb-6 flex-wrap gap-3">
   <h1 class="text-2xl font-bold text-gray-700">Tasks Management</h1>
-  <a href="#"
+  <a href="{{.CreateTasksURL}}"
     class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
     <i class="fas fa-plus mr-2"></i> Create Task
   </a>
@@ -16,7 +16,7 @@
     <!-- Loop Status -->
     {{range $status := list "ready" "in progress" "fix" "code review" "test" "done"}}
     <div class="bg-gray-50 w-64 rounded-xl p-3 flex-shrink-0 border 
-     min-h-[350px] max-h-[700px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
+     min-h-[350px] max-h-[370px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
       <h2 class="font-semibold text-gray-600 mb-3 uppercase text-sm">
         {{$status | title}}
       </h2>

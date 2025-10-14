@@ -54,6 +54,15 @@ func main() {
 		Name("tasks").
 		Methods("GET")
 
+	router.HandleFunc("/tasks/create", handlers.CreateTaskHandler).
+		Name("tasks.create").
+		Methods("GET")
+
+	router.HandleFunc("/tasks/store", handlers.StoreTaskHandler).
+		Name("tasks.store").
+		Methods("POST")
+
+
 	// === Simpan router ke package handlers (setelah semua routes terdaftar) ===
 	handlers.Router = router
 
